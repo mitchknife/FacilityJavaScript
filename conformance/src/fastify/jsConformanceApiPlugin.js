@@ -32,7 +32,8 @@ function parseBoolean(value) {
 }
 
 export const jsConformanceApiPlugin = async (fastify, opts) => {
-  const { api, caseInsenstiveQueryStringKeys, includeErrorDetails } = opts;
+  const { serviceOrFactory, caseInsenstiveQueryStringKeys, includeErrorDetails } = opts;
+  const getService = typeof serviceOrFactory === 'function' ? serviceOrFactory : () => serviceOrFactory;
 
   for (const jsonSchema of jsonSchemas) {
     fastify.addSchema(jsonSchema);
@@ -87,7 +88,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
     handler: async function (req, res) {
       const request = {};
 
-      const result = await api.getApiInfo(request);
+      const service = getService(req);
+      const result = await service.getApiInfo(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -123,7 +125,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
       const query = req.query;
       if (typeof query['q'] === 'string') request.query = query['q'];
 
-      const result = await api.getWidgets(request);
+      const service = getService(req);
+      const result = await service.getWidgets(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -153,7 +156,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
 
       request.widget = req.body;
 
-      const result = await api.createWidget(request);
+      const service = getService(req);
+      const result = await service.createWidget(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -193,7 +197,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
       const headers = req.headers;
       if (typeof headers['if-none-match'] === 'string') request.ifNotETag = headers['if-none-match'];
 
-      const result = await api.getWidget(request);
+      const service = getService(req);
+      const result = await service.getWidget(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -238,7 +243,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
       const headers = req.headers;
       if (typeof headers['if-match'] === 'string') request.ifETag = headers['if-match'];
 
-      const result = await api.deleteWidget(request);
+      const service = getService(req);
+      const result = await service.deleteWidget(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -278,7 +284,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
 
       request.ids = req.body;
 
-      const result = await api.getWidgetBatch(request);
+      const service = getService(req);
+      const result = await service.getWidgetBatch(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -318,7 +325,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
       request.field = body.field;
       request.matrix = body.matrix;
 
-      const result = await api.mirrorFields(request);
+      const service = getService(req);
+      const result = await service.mirrorFields(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -356,7 +364,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
       if (typeof query['enum'] === 'string') request.enum = query['enum'];
       if (typeof query['datetime'] === 'string') request.datetime = query['datetime'];
 
-      const result = await api.checkQuery(request);
+      const service = getService(req);
+      const result = await service.checkQuery(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -394,7 +403,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
       if (typeof params['enum'] === 'string') request.enum = params['enum'];
       if (typeof params['datetime'] === 'string') request.datetime = params['datetime'];
 
-      const result = await api.checkPath(request);
+      const service = getService(req);
+      const result = await service.checkPath(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -432,7 +442,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
       if (typeof headers['enum'] === 'string') request.enum = headers['enum'];
       if (typeof headers['datetime'] === 'string') request.datetime = headers['datetime'];
 
-      const result = await api.mirrorHeaders(request);
+      const service = getService(req);
+      const result = await service.mirrorHeaders(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -488,7 +499,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
       const body = req.body;
       request.normal = body.normal;
 
-      const result = await api.mixed(request);
+      const service = getService(req);
+      const result = await service.mixed(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -547,7 +559,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
       request.hasWidget = body.hasWidget;
       request.point = body.point;
 
-      const result = await api.required(request);
+      const service = getService(req);
+      const result = await service.required(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -580,7 +593,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
 
       request.content = req.body;
 
-      const result = await api.mirrorBytes(request);
+      const service = getService(req);
+      const result = await service.mirrorBytes(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -617,7 +631,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
 
       request.content = req.body;
 
-      const result = await api.mirrorText(request);
+      const service = getService(req);
+      const result = await service.mirrorText(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];
@@ -651,7 +666,8 @@ export const jsConformanceApiPlugin = async (fastify, opts) => {
 
       request.content = req.body;
 
-      const result = await api.bodyTypes(request);
+      const service = getService(req);
+      const result = await service.bodyTypes(request);
 
       if (result.error) {
         const status = result.error.code && standardErrorCodes[result.error.code];

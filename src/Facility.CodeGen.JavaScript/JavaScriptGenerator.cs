@@ -554,14 +554,8 @@ namespace Facility.CodeGen.JavaScript
 
 				code.WriteLine();
 
-				var fastifyImports = new List<string>();
 				if (TypeScript)
-				{
-					fastifyImports.Add("FastifyPluginAsync");
-					fastifyImports.Add("RegisterOptions");
-				}
-
-				WriteImports(code, fastifyImports, "fastify");
+					code.WriteLine("import type * as fastifyTypes from 'fastify';");
 
 				var facilityImports = new List<string>();
 				if (TypeScript)
@@ -580,18 +574,19 @@ namespace Facility.CodeGen.JavaScript
 				if (TypeScript)
 				{
 					code.WriteLine();
-					using (code.Block($"export type {capModuleName}PluginOptions = RegisterOptions & {{", "}"))
+					using (code.Block($"export type {capModuleName}PluginOptions = fastifyTypes.RegisterOptions & {{", "}"))
 					{
-						code.WriteLine($"api: I{capModuleName};");
+						code.WriteLine($"serviceOrFactory: I{capModuleName} | ((req: fastifyTypes.FastifyRequest) => I{capModuleName});");
 						code.WriteLine("caseInsenstiveQueryStringKeys?: boolean;");
 						code.WriteLine("includeErrorDetails?: boolean;");
 					}
 				}
 
 				code.WriteLine();
-				using (code.Block($"export const {camelCaseModuleName}Plugin" + IfTypeScript($": FastifyPluginAsync<{capModuleName}PluginOptions>") + " = async (fastify, opts) => {", "}"))
+				using (code.Block($"export const {camelCaseModuleName}Plugin" + IfTypeScript($": fastifyTypes.FastifyPluginAsync<{capModuleName}PluginOptions>") + " = async (fastify, opts) => {", "}"))
 				{
-					code.WriteLine("const { api, caseInsenstiveQueryStringKeys, includeErrorDetails } = opts;");
+					code.WriteLine("const { serviceOrFactory, caseInsenstiveQueryStringKeys, includeErrorDetails } = opts;");
+					code.WriteLine("const getService = typeof serviceOrFactory === 'function' ? serviceOrFactory : () => serviceOrFactory;");
 
 					code.WriteLine();
 					using (code.Block("for (const jsonSchema of jsonSchemas) {", "}"))
@@ -738,7 +733,8 @@ namespace Facility.CodeGen.JavaScript
 								}
 
 								code.WriteLine();
-								code.WriteLine($"const result = await api.{methodName}(request);");
+								code.WriteLine("const service = getService(req);");
+								code.WriteLine($"const result = await service.{methodName}(request);");
 
 								code.WriteLine();
 								using (code.Block("if (result.error) {", "}"))
